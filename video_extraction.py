@@ -2,7 +2,8 @@ import os
 import cv2
 import yt_dlp as youtube_dl
 
-youtube_urls = ["https://www.youtube.com/watch?v=dCelRItdGfc"]
+youtube_urls = ["https://www.youtube.com/watch?v=fblq5uTVc5I",
+                ]
 
 def download_video(urls):
     """Downloading videos from YouTube of gameplay"""
