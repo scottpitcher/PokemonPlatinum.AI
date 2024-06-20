@@ -3,3 +3,6 @@
 
 # Ignore training data
 train_data/*
+
+# Ignore RoboFlow Data
+Pokémon-Platinum-AI-1/*
