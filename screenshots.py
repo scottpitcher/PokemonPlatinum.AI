@@ -21,5 +21,5 @@ def capture_screenshots(output_dir='train_data/label_training', interval=3):
         time.sleep(interval)
 
 # Example usage
-capture_screenshots(interval=10)
+capture_screenshots(interval=3)
 
