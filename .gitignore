@@ -9,3 +9,7 @@ pokemon_platinum_ai-2/*
 
 # Ignore training runs
 runs/*
+
+# Ignore v9-models
+v9-models/*
+yolov9s.pt
