@@ -5,7 +5,7 @@
 train_data/*
 
 # Ignore RoboFlow Data
-pokemon_platinum_ai-1/*
+pokemon_platinum_ai-2/*
 
 # Ignore training runs
 runs/*
