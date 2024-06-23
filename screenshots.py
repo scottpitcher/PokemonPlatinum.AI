@@ -8,10 +8,10 @@ def capture_screenshots(output_dir='train_data/label_training', interval=3):
         os.makedirs(output_dir)
     frame_count = 0
     while True:
-        left = 539
-        top = 87
-        width = 391
-        height = 581
+        left = 0
+        top = 90
+        width = 562
+        height = 842
 
         screenshot = pyautogui.screenshot(region=(left, top, width, height))
         frame_path = os.path.join(output_dir, f'{time.strftime("%Y-%m-%d_%H-%M-%S")}.png')
