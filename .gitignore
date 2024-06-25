@@ -1,5 +1,5 @@
 # Ignore virtual environment
-.venv/*
+.platvenv/*
 
 # Ignore training data
 train_data/*
