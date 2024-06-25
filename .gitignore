@@ -3,6 +3,9 @@
 
 # Ignore training data
 train_data/*
+annotated_images/images/*
+annotated_images/actions/*
+annotated_images/labels/*
 
 # Ignore RoboFlow Data
 pokemon_platinum_ai-5/*
