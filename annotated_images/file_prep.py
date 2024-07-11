@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 images_in_path = 'train_data/label_training'
-annotation_paths = ['pokemon_platinum_ai-5/train/labels', 'pokemon_platinum_ai-5/test/labels', 'pokemon_platinum_ai-5/valid/labels']
+annotation_paths = ['pokemon_platinum_ai-6/train/labels', 'pokemon_platinum_ai-6/test/labels', 'pokemon_platinum_ai-6/valid/labels']
 
 
 images_out_path = 'annotated_images/images'
@@ -32,7 +32,7 @@ for image_file in images_folder:
     # Check if annotation already saved, if so, save the image to keep proper order and move on
     if os.path.exists(os.path.join(annotation_out_path, annotation_name)):
         images_and_annotations.append((image, None))
-        print(f"Annotation for {image_file} already saved, skipping.")
+        print(f"Annotation for {image_file} already saved, continuing...")
         continue
     
     # Look for annotation file
