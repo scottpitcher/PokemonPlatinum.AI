@@ -25,32 +25,36 @@ def annotate_images(images_dir, actions_dir):
         if image_name =='.DS_Store':
             continue
 
-        # Open current image to view for user
+        # Grab current image to view for user
         image = Image.open(image_path)
-        image.show()
 
         # Based on prev and current image, decide on action taken for prev; replace extension for new filename
-        action_file = images[prev_idx].replace('.png', '.json')
+        action_file = images[idx].replace('.png', '.json')
         # Save the current idx to be used for the next iteration
-        prev_idx = idx
+        # prev_idx = idx
 
         # Skip files that have already been processed
         if os.path.exists(os.path.join(actions_dir,action_file)):
             print(f"{action_file} has already been processed, continuing")
             continue
+        else:
+            image.show()
 
-        # Skip first as no prev image to get action for 
-        if idx > 0:
+        if idx >= 0:
             action = get_action_from_user()
+            image.close()
             action_file = os.path.join(actions_dir, action_file)
             with open(action_file, 'w') as f:
                 json.dump(action, f)
+        
+        
         
     # For the last image
     action = get_action_from_user()
     action_file = os.path.join(actions_dir, images[-1].replace('.png', '.json'))
     with open(action_file, 'w') as f:
         json.dump(action, f)
+        
 
 images_dir = 'annotated_images/images'
 actions_dir = 'annotated_images/actions'

@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 images_in_path = 'train_data/label_training'
-annotation_paths = ['pokemon_platinum_ai-6/train/labels', 'pokemon_platinum_ai-6/test/labels', 'pokemon_platinum_ai-6/valid/labels']
+annotation_paths = ['pokemon_platinum_ai-7/train/labels', 'pokemon_platinum_ai-7/test/labels', 'pokemon_platinum_ai-7/valid/labels']
 
 
 images_out_path = 'annotated_images/images'
@@ -62,12 +62,14 @@ for image_file in images_folder:
         images_and_annotations.append((image, None))
         print(f"No annotation found for image {image_file}, image sucessfully retrieved")
 
+
 # write them all with standardised filenames
 for i, (image, annotation_file) in enumerate(images_and_annotations):
-    
     # Keeping all images saved with or w/out annotation for order purposes
     new_image_name = f'frame_{i}.png'
     new_annotation_name = f'frame_{i}.txt'
+
+
     # Check if the image is already saved, if not, save it, if so, check if it has an annotation
     if os.path.exists(os.path.join(images_out_path,new_image_name)) and os.path.exists(os.path.join(annotation_out_path,new_annotation_name)):
         print(f'Image and annotation for {new_image_name} already saved, continuing...')
@@ -75,17 +77,18 @@ for i, (image, annotation_file) in enumerate(images_and_annotations):
     elif os.path.exists(os.path.join(images_out_path,new_image_name)) and annotation_file is None:
         print(f"Image {new_image_name} has no annotation created yet, continuing...")
         continue
-    
+
     # If the annotation file exists it will save it, otherwise, it will alert that only the image was saved
     if annotation_file is not None:
+        image.save(os.path.join(images_out_path, new_image_name))
         # Check if the annotation has already been saved, otherwise indicate
         if not os.path.exists(os.path.join(annotation_out_path,new_annotation_name)):
             with open(annotation_file, 'r') as af:
                 annotation_content = af.read()
             with open(os.path.join(annotation_out_path, new_annotation_name), 'w') as af_out:
                 af_out.write(annotation_content)
+                
             print(f"Image {new_image_name} and its annotation saved")
-            image.save(os.path.join(images_out_path, new_image_name))
 
 print("Completed")
 
