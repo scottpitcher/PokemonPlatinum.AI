@@ -19,10 +19,12 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 **video_extraction.py:** Script to extract gameplay footage from videos of gameplay<br>
 
 # Overall Project Workflow ✅
-1. 
-2. 
+1. Obtain and annotate gameplay footage and personal gameplay screenshots
+2. Tune YOLOv9 model to annotate gameplay
+3. Use gameplay images, annotations, and action (JSON) to train foundational model for gameplay before RLHF training
+4. Use pretrained gameplay model to initialise RLHF Traininig, divided into three phases (outlined below)
 
-# Training Phases 🏋🏽
+# RLHF Training Phases 🏋🏽
 The overall goal of this project is to train model to learn to get from *Jubilife City* to *Oreburgh City*, beating at least one npc trainer along the way. For context, to get from *Jubilife City* to *Oreburgh City* in Pokémon Platinum, the user has to go from *Jubilife City*, pass through *Route 203*, then through *Oreburgh Cave*, then enters *Oreburgh City*.
 
 For a human, this process should take no more than a few minutes.
