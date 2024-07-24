@@ -16,3 +16,6 @@ runs/*
 # Ignore v9-models
 v9-models/*
 yolov9s.pt
+
+# Ignore the initial model (size constraint)
+models/pokemon_model_lstm.pth
