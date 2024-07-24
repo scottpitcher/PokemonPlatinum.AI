@@ -29,7 +29,7 @@ model = load_phase_1()
 print("Gameplay model successfully loaded!")
 
 # Open Gameplay Functions
-from modular_scripts.rlhf_utils import open_emulator
+from modular_scripts.rlhf_utils import open_emulator, ACTION_MAP, get_feedback
 
 # Open the emulator
 open_emulator()
