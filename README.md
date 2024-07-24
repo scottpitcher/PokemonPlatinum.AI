@@ -4,14 +4,14 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 # Directory 📍
 project_directory/ <br>
 ├── models/<br>
-│   ├── PokemonModelLSTM.py: Modular script that contains the model architecture<br>
+├──├── PokemonModelLSTM.py: Modular script that contains the model architecture<br>
 ├── RLHF_Scripts: Folder that contains scripts and modular code for RLHF Model<br>
-│   ├── modular_scripts: Folder for modular scripts to be used used during different RLHF Training Phase<br>
-│   │   ├── load_model.py: Loads model, the state dict (dependent on phase), to be used in RLHF Training<br>
-│   │   ├── rlhf_utils.py: A collection of functions to be used throughout training (connecting with    │   │   │   emulator, taking actions, calculating rewards, etc.)<br>
-│   ├── rlhf_phase1.py: Script for training initial model for Phase 1 goal<br>
-│   ├── rlhf_phase2.py: Script for training Phase 1 model for Phase 2 goal<br>
-│   ├── rlhf_phase3.py: Script for training Phase 2 model for Phase 3, final goal<br>
+├──├── modular_scripts: Folder for modular scripts to be used used during different RLHF Training Phase<br>
+├──├──├── load_model.py: Loads model, the state dict (dependent on phase), to be used in RLHF Training<br>
+├──├──├── rlhf_utils.py: A collection of functions to be used throughout training (connecting with    │   ├──├──├── emulator, taking actions, calculating rewards, etc.)<br>
+├──├── rlhf_phase1.py: Script for training initial model for Phase 1 goal<br>
+├──├── rlhf_phase2.py: Script for training Phase 1 model for Phase 2 goal<br>
+├──├── rlhf_phase3.py: Script for training Phase 2 model for Phase 3, final goal<br>
 ├── runs: Folder which contains the trained annotation models<br>
 ├── annotation_model.ipynb: Notebook for training the annotation model from YOLO<br>
 ├── model_pretraining.ipynb: Notebook to pretrain the model based on gameplay screenshots before RLHF<br>
