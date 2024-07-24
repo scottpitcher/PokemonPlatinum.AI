@@ -24,11 +24,12 @@ num_layers = 2
 num_epochs = 20
 
 # Initialising model
-model = PokemonModelLSTM(input_size, hidden_size, num_layers, num_actions).to(device)
-
-# Load the trained model
-state_dict = torch.load("models/pokemon_model_lstm.pth")
-model.load_state_dict(state_dict)
-
+from modular_scripts.load_model import load_phase_1
+model = load_phase_1()
 print("Gameplay model successfully loaded!")
-# gameplay_model.eval()
+
+# Open Gameplay Functions
+from modular_scripts.rlhf_utils import open_emulator
+
+# Open the emulator
+open_emulator()
