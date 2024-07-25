@@ -12,16 +12,20 @@ from torchvision import transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
+from collections import deque
 
 device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Device: {device}")
-from models.PokemonModelLSTM import PokemonModelLSTM
-# Setting Hyperparameters
-num_actions = 9  # (Total Number of Actions: [A, B, X, Y, Up, Down, Left, Right, None]) (Excluding Start, Select, L, R to reduce model complexity)
-input_size = 32 * 160 * 160
-hidden_size = 128
-num_layers = 2
-num_epochs = 20
+
+# Hyperparameters
+
+epsilon = 1.0                        # Initial exploration rate (probability of choosing a random action)
+epsilon_decay = 0.995                # Decay rate for the exploration probability after each episode
+min_epsilon = 0.01                   # Minimum exploration rate to ensure some exploration continues
+gamma = 0.99                         # Discount factor for future rewards in Q-learning
+replay_buffer = deque(maxlen=10000)  # Buffer to store past experiences for training
+batch_size = 32                      # Number of experiences sampled from the replay buffer for training
+
 
 # Initialising model
 from modular_scripts.load_model import load_phase_1
@@ -33,5 +37,6 @@ from modular_scripts.rlhf_utils import open_emulator, ACTION_MAP, get_feedback
 
 # Open the emulator
 open_emulator()
+
 
 # Reward Map
