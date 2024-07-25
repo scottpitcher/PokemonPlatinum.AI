@@ -33,3 +33,5 @@ from modular_scripts.rlhf_utils import open_emulator, ACTION_MAP, get_feedback
 
 # Open the emulator
 open_emulator()
+
+# Reward Map

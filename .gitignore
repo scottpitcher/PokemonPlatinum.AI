@@ -9,7 +9,7 @@ annotated_images/actions/*
 annotated_images/labels/*
 
 # Ignore RoboFlow Data
-pokemon_platinum_ai-7/*
+pokemon_platinum_ai-9/*
 
 # Ignore training runs
 runs/*

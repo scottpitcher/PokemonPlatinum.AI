@@ -14,6 +14,10 @@ ACTION_MAP = {
     'Right': 'right'
 }
 
+REWARD_MAP = {
+    ""
+}
+
 desmume_executable = '/Applications/DeSmuME.app/Contents/MacOS/DeSmuME'
 pokemon_rom = 'Platinum_Randomized.nds'
 state_file = '/Users/scottpitcher/Library/Application Support/DeSmuME/0.9.13/States/Platinum_Randomized.ds4'
@@ -31,7 +35,16 @@ def open_emulator():
     pyautogui.press(key)
     print(f"Loaded state {key}")
 
+def capture_state():
+    left = 0
+    top = 90
+    width = 562
+    height = 842
 
+    screenshot = pyautogui.screenshot(region=(left, top, width, height))
+    return screenshot
+
+def 
 
 def get_feedback(state, action):
     # Example feedback logic, to be customized
