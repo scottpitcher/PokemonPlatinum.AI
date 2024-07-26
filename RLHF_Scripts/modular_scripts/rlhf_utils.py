@@ -25,7 +25,7 @@ REWARD_MAP = {
     ""
 }
 
-#
+# Filepaths for loading in the emulator and ROM/state
 desmume_executable = '/Applications/DeSmuME.app/Contents/MacOS/DeSmuME'
 pokemon_rom = 'Platinum_Randomized.nds'
 state_file = '/Users/scottpitcher/Library/Application Support/DeSmuME/0.9.13/States/Platinum_Randomized.ds4'

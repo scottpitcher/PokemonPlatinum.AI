@@ -7,8 +7,8 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 |——**Actions**<br>
 |——**Images**<br>
 |——**Labels**<br>
-|——**action_map.py:**: <br>
-|——**action_prep.py:**Script that displays an image, prompts for an action, then repeats until all images have been proccessed <br>
+|——**action_map.py:** <br>
+|——**action_prep.py:** Script that displays an image, prompts for an action, then repeats until all images have been proccessed <br>
 |——**annotations_errorcheck.py:**: Script that runs through both the original filepath, and annotated, and ensures the metadata on both matches<br>
 |——**file_prep.py:** Script to prep the files for usage in the models (renaming to a standardised naming system)<br>
 **RLHF_Scripts:** Folder that contains scripts and modular code for RLHF Model<br>
