@@ -3,8 +3,9 @@ import time
 import pyautogui
 import torch
 from ultralytics import YOLO
-from runs.detect.firstRun.weights import best
+from runs.detect.firstRun.weights import best # Update this to final run after training
 
+# Load in annotation model
 annotation_model = YOLO(best)
 
 # Action map for the game key vs emulator input
@@ -56,13 +57,26 @@ def capture_state():
 def check_route_203(screenshot, annotation_model):
     """Use annotation model to detect whether the Route 203 Location Pop-up is present
         i.e. has the user reached route 203?"""
-    annotated_frame = annotation_model(screenshot)
+    annotated_frame = annotation_model.predict(screenshot)
 
-    return None
+    at_route_203 = False
+    for result in annotated_frame:
+        if result.boxes is not None:
+            for box in result.boxes:
+                class_id = box.cls.item()           # Get the class ID
+                confidence = box.conf.item()        # Get the confidence score
+                class_name = annotation_model.names[class_id]  # Map the class ID to the class name
+                if class_name == "route203" and confidence > 0.85:
+                    at_route_203 = True
+                    break
+        if at_route_203:
+            break
+    
+    return at_route_203
 
 def get_feedback(state, action):
 
-    if check_route_203(state):
+    if check_route_203(state, annotation_model = annotation_model):
         return 100, True  # High reward and end episode
     return -1, False  # Small penalty for each step
 
