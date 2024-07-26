@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 images_in_path = 'train_data/label_training'
-annotation_paths = ['pokemon_platinum_ai-7/train/labels', 'pokemon_platinum_ai-7/test/labels', 'pokemon_platinum_ai-7/valid/labels']
+annotation_paths = ['pokemon_platinum_ai-9/train/labels', 'pokemon_platinum_ai-9/test/labels', 'pokemon_platinum_ai-9/valid/labels']
 
 
 images_out_path = 'annotated_images/images'
@@ -134,7 +134,7 @@ for i in range(len(images_folder)):
     if original_content == new_content:
         j+=1
     else:
-        print(f"{base_name} has a mismatch")
+        print(f"{base_name} has a mismatch with {new_name}")
 
     if (j+1)==len(images_out_folder):
         print("All annotations were processed correctly!")

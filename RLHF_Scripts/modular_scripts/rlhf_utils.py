@@ -58,7 +58,6 @@ def check_route_203(screenshot, annotation_model):
         i.e. has the user reached route 203?"""
     annotated_frame = annotation_model(screenshot)
 
-
     return None
 
 def get_feedback(state, action):
@@ -67,8 +66,5 @@ def get_feedback(state, action):
         return 100, True  # High reward and end episode
     return -1, False  # Small penalty for each step
 
-def get_state_from_emulator():
-    None
-
-def perform_action():
-    None
+# def perform_action():
+#     None

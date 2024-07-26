@@ -3,6 +3,14 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 
 # Directory 📍
 **PokemonModelLSTM.py:** Modular script that contains the model architecture<br>
+**Annotated_images**: Folder contained the actions, states, and labels for model pretraining before RL<br>
+|——**Actions**<br>
+|——**Images**<br>
+|——**Labels**<br>
+|——**action_map.py:**: <br>
+|——**action_prep.py:**Script that displays an image, prompts for an action, then repeats until all images have been proccessed <br>
+|——**annotations_errorcheck.py:**: Script that runs through both the original filepath, and annotated, and ensures the metadata on both matches<br>
+|——**file_prep.py:** Script to prep the files for usage in the models (renaming to a standardised naming system)<br>
 **RLHF_Scripts:** Folder that contains scripts and modular code for RLHF Model<br>
 |—— **modular_scripts:** Folder for modular scripts to be used used during different RLHF Training Phase<br>
 |——|—— **load_model.py:** Loads model, the state dict (dependent on phase), to be used in RLHF Training<br>
