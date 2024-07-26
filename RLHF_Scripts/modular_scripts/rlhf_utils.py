@@ -10,14 +10,14 @@ annotation_model = YOLO(best)
 
 # Action map for the game key vs emulator input
 ACTION_MAP = {
-    'A': 'x',
-    'B': 'z',
-    'X': 's',
-    'Y': 'a',
-    'Up': 'up',
-    'Down': 'down',
-    'Left': 'left',
-    'Right': 'right'
+    'a': 'x',
+    'b': 'z',
+    'x': 's',
+    'y': 'a',
+    'up': 'up',
+    'down': 'down',
+    'left': 'left',
+    'right': 'right'
 }
 
 # Reward map for certain events
@@ -66,6 +66,7 @@ def check_route_203(screenshot, annotation_model):
                 class_id = box.cls.item()           # Get the class ID
                 confidence = box.conf.item()        # Get the confidence score
                 class_name = annotation_model.names[class_id]  # Map the class ID to the class name
+                # Check if at route 203
                 if class_name == "route203" and confidence > 0.85:
                     at_route_203 = True
                     break
@@ -80,5 +81,6 @@ def get_feedback(state, action):
         return 100, True  # High reward and end episode
     return -1, False  # Small penalty for each step
 
-# def perform_action():
-#     None
+def perform_action(action):
+    pyautogui.press(ACTION_MAP["action"])
+    return None
