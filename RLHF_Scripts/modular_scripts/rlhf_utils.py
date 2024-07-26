@@ -67,7 +67,7 @@ def check_route_203(screenshot, annotation_model):
                 confidence = box.conf.item()        # Get the confidence score
                 class_name = annotation_model.names[class_id]  # Map the class ID to the class name
                 # Check if at route 203
-                if class_name == "route203" and confidence > 0.85:
+                if class_name == "route203" and confidence > 0.60:
                     at_route_203 = True
                     break
         if at_route_203:
@@ -75,11 +75,15 @@ def check_route_203(screenshot, annotation_model):
     
     return at_route_203
 
-def get_feedback(state, action):
-
-    if check_route_203(state, annotation_model = annotation_model):
-        return 100, True  # High reward and end episode
-    return -1, False  # Small penalty for each step
+def detection_feedback(state, action):
+    """Function to check if the the model detected correctly that the user has reached Route 203"""
+    user_input = ''
+    while user_input not in ['yes','no']:
+        user_input = input("has the model reached route 203?")
+        if user_input =='yes':
+            return 100, True  # High reward and end episode
+        elif user_input =='no':
+            return -1, False  # Small penalty for each step
 
 def perform_action(action):
     pyautogui.press(ACTION_MAP["action"])

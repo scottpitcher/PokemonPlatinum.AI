@@ -34,7 +34,7 @@ model.eval()
 print("Gameplay model successfully loaded!")
 
 # Open Gameplay Functions
-from modular_scripts.rlhf_utils import open_emulator, ACTION_MAP, perform_action, capture_state, check_route_203
+from modular_scripts.rlhf_utils import open_emulator, ACTION_MAP, perform_action, capture_state, get_feedback, check_route_203
 
 # Open the emulator
 open_emulator()
@@ -61,10 +61,11 @@ for episode in range(num_episodes):
         perform_action(action)
         next_state = capture_state()
         next_state = transforms.ToTensor()(next_state).unsqueeze(0).to(device)
-
-        # Get reward and check if the episode is done
-        reward, done = get_feedback(next_state, action)
-        episode_reward += reward
+        
+        if check_route_203():
+            # Get reward and check if the episode is done
+            reward, done = get_feedback(next_state, action)
+            episode_reward += reward
 
         # Store experience in replay buffer
         replay_buffer.append((state, action, reward, next_state, done))
