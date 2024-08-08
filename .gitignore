@@ -10,6 +10,8 @@ annotated_images/labels/*
 
 # Ignore RoboFlow Data
 pokemon_platinum_ai-9/*
+pokemon_platinum_ai-10/*
+route_203_images/*
 
 # Ignore training runs
 runs/*
