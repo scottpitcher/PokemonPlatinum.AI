@@ -1,0 +1,37 @@
+# Ignore virtual environment
+.platvenv/*
+.venv
+.env
+
+# Ignore training data
+train_data/*
+annotated_images/images/*
+annotated_images/actions/*
+annotated_images/labels/*
+annotated_images copy/*
+annotated_images (backup)/*
+
+# Ignore RoboFlow Data
+pokemon_platinum_ai-9/*
+pokemon_platinum_ai-10/*
+pokemon_platinum_ai-11/*
+pokemon_platinum_ai-12/*
+pokemon_platinum_ai-13/*
+pokemon_platinum_ai-14/*
+pokemon_platinum_ai-15/*
+pokemon_platinum_ai-16/*
+
+route_203_images/*
+
+# Ignore training runs
+runs/*
+mlruns/*
+
+# Ignore models
+models/*
+v9-models/*
+yolov9s.pt
+yolov9.yaml
+
+# Ignore the initial model (size constraint)
+models/pokemon_model_lstm.pth
