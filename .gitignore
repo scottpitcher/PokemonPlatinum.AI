@@ -35,3 +35,4 @@ yolov9.yaml
 
 # Ignore the initial model (size constraint)
 models/pokemon_model_lstm.pth
+RLHF_Scripts/modular_scripts/__pycache__/*

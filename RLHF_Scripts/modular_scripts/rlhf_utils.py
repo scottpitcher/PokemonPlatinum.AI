@@ -17,17 +17,6 @@ best = "runs/detect/firstRun/weights/best.pt"
 annotation_model = YOLO(best)
 
 # Variable definitions
-## Action map for the game key vs emulator input
-ACTION_MAP = {
-    'a': 'x',
-    'b': 'z',
-    'x': 's',
-    'y': 'a',
-    'up': 'up',
-    'down': 'down',
-    'left': 'left',
-    'right': 'right'
-}
 
 ## Filepaths for loading in the emulator and ROM/state
 desmume_executable = '/Applications/DeSmuME.app/Contents/MacOS/DeSmuME'

@@ -25,7 +25,7 @@ device = 'cpu'
 print(f"Device: {device}")
 
 # Hyperparameters
-epsilon = 0.05                       # Initial exploration rate (probability of choosing a random action)
+epsilon = 0.99                       # Initial exploration rate (probability of choosing a random action)
 epsilon_decay = 0.995                # Decay rate for the exploration probability after each episode
 min_epsilon = 0.05                   # Minimum exploration rate to ensure some exploration continues
 gamma = 0.99                         # Discount factor for future rewards in Q-learning
@@ -40,7 +40,7 @@ import sys
 
 # Set system path to project
 sys.path.append('/Users/scottpitcher/Desktop/python/Github/PokemonPlatinum.AI/')
-from RLHF_Scripts.modular_scripts.rlhf_utils import open_emulator, ACTION_MAP, perform_action, capture_state, phase1_reward
+from RLHF_Scripts.modular_scripts.rlhf_utils import open_emulator, perform_action, capture_state, phase1_reward
 from RLHF_Scripts.modular_scripts.load_model import load_phase_1
 
 model, optimizer = load_phase_1()
@@ -50,11 +50,13 @@ print("Gameplay model successfully loaded!")
 
 # Open Gameplay Functions
 from RLHF_Scripts.modular_scripts.rlhf_utils import open_emulator, perform_action, capture_state, phase1_reward
+
+# Converts emulator input to model input
 ACTION_MAPPING = {
-    "a": 0,
-    "b": 1,
-    "x": 2,
-    "y": 3,
+    "x": 0,
+    "z": 1,
+    "s": 2,
+    "a": 3,
     "up": 4,
     "down": 5,
     "left": 6,
@@ -62,16 +64,30 @@ ACTION_MAPPING = {
     "none": 8
 }
 
+# Converts model output to emulator input
 REVERSED_ACTION_MAPPING = {
-    0: "a",
-    1: "b",
-    2: "x",
-    3: "y",
+    0: "x",
+    1: "z",
+    2: "s",
+    3: "a",
     4: "up",
     5: "down",
     6: "left",
     7: "right",
     8: "none"
+}
+
+# Converts emulator input into action known to user
+ACTION_MAP_DIALOGUE = {
+    "x":'a',
+    "z":"b",
+    "s":"x",
+    "a":"y",
+    "up":"up",
+    "down":"down",
+    "left":"left",
+    "right":"right",
+    "none":"none"
 }
 
 # Open the emulator
@@ -80,7 +96,7 @@ print('Emulator opened!')
 
 # Training loop:
 # 1. Loop through episodes
-# 2. Captures current state/annotates
+# 2. Captures current state/annotatesfri
 # 3. Determines action (epsilon greedy policy)
 # 4. Performs action
 # 5. Captures next state, checks if done
@@ -89,7 +105,7 @@ print('Emulator opened!')
 # 8. Epsilon Decay
 
 # Start MLflow experiment
-mlflow.set_experiment("Pokemon_Platinum_AI")
+mlflow.set_experiment("Pokemon_Platinum_AI_Phase1")
 
 # Set MLflow tracking
 with mlflow.start_run():
@@ -100,7 +116,7 @@ with mlflow.start_run():
     mlflow.log_param("batch_size", batch_size)
     mlflow.log_param("num_episodes", num_episodes)
 
-    # Loop over episode count
+    # Loop over episode countf55y
     for episode in range(num_episodes):   # Looping over num_episodes
         state = capture_state().convert('RGB').resize((640, 640))
         state = transforms.ToTensor()(state).unsqueeze(0).to(device)
@@ -111,25 +127,29 @@ with mlflow.start_run():
         pyautogui.press('5') # Restart from Jubilife City
         while not done:
             j += 1
-            time.sleep(0.1)
             if np.random.rand() <= epsilon:
                 print("Using exploration")
-                action = np.random.choice(list(ACTION_MAP.keys())) 
+                # Chooses from the 
+                action = np.random.choice(list(ACTION_MAP_DIALOGUE.keys())) 
             else:
                 print("Using exploitation")
                 q_values = model(state.unsqueeze(0))
                 action = torch.argmax(q_values).item()
                 action = REVERSED_ACTION_MAPPING[action]
-
-            print(f"Action: {action}")
             
-            perform_action(action)
+            print(f"Action: {ACTION_MAP_DIALOGUE[action]}")
+
+            time.sleep(0.1)
+            pyautogui.keyDown(action)
+            pyautogui.keyUp(action)
             next_state = capture_state().convert('RGB').resize((640, 640))
             next_state = transforms.ToTensor()(next_state).unsqueeze(0).to(device)
             reward, done = phase1_reward(screenshot=next_state)
             episode_reward += reward
 
-            replay_buffer.append((state, action, reward, next_state, done))
+            action_index = ACTION_MAPPING[action]
+
+            replay_buffer.append((state, action_index, reward, next_state, done))
             state = next_state
 
             if len(replay_buffer) > batch_size and j>=25:
@@ -141,10 +161,8 @@ with mlflow.start_run():
                     state, next_state = state.unsqueeze(0), next_state.unsqueeze(0)
                     target = reward
                     if not done:
-                        target += gamma * torch.max(model(next_state))
+                       target += gamma * torch.max(model(next_state))
                     target_f= model(state)                
-                    # Convert action to integer index
-                    action_index = ACTION_MAPPING[action]
 
                     target_f[0][action_index] = target
 
@@ -168,3 +186,14 @@ with mlflow.start_run():
     mlflow.pytorch.log_model(model, "model")
 
 print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward}, Epsilon: {epsilon:.2f}")
+
+
+
+# import pyautogui
+# import time
+# time.sleep(1)
+# for i in range(5):
+#     print("going up")
+#     time.sleep(3)
+#     pyautogui.keyDown('up')
+#     pyautogui.keyUp('up')
