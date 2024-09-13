@@ -20,6 +20,7 @@ import random
 from PIL import Image
 import mlflow
 import mlflow.pytorch
+import sys
 
 device = 'cpu'
 print(f"Device: {device}")
@@ -32,11 +33,7 @@ gamma = 0.99                         # Discount factor for future rewards in Q-l
 replay_buffer = deque(maxlen=10000)  # Buffer to store past experiences for training, (Max 10,000 experiences)
 batch_size = 32                      # Number of experiences sampled from the replay buffer for training
 num_episodes = 500                   # Amount of times the model will go through the training loop
-
 print("Model parameters set!")
-
-# Load in initialised model
-import sys
 
 # Set system path to project
 sys.path.append('/Users/scottpitcher/Desktop/python/Github/PokemonPlatinum.AI/')
@@ -91,6 +88,7 @@ ACTION_MAP_DIALOGUE = {
 }
 
 # Open the emulator
+print('Opening emulator...')
 open_emulator()
 print('Emulator opened!')
 
@@ -104,9 +102,13 @@ print('Emulator opened!')
 # 7. Sample from replay buffer for stabilization
 # 8. Epsilon Decay
 
+# Slight delay to ensure emulator is in correct window
+time.sleep(2)
+
 # Start MLflow experiment
 mlflow.set_experiment("Pokemon_Platinum_AI_Phase1")
 
+print("Beginning training...")
 # Set MLflow tracking
 with mlflow.start_run():
     mlflow.log_param("epsilon", epsilon)
@@ -137,9 +139,8 @@ with mlflow.start_run():
                 action = torch.argmax(q_values).item()
                 action = REVERSED_ACTION_MAPPING[action]
             
+            # Map the key onto what the user would understand in actual console gameplay
             print(f"Action: {ACTION_MAP_DIALOGUE[action]}")
-
-            time.sleep(0.1)
 
             # Use .keyDown/.keyUp as opposed to .press as emulator might not detect input
             pyautogui.keyDown(action)
@@ -195,14 +196,3 @@ with mlflow.start_run():
     mlflow.pytorch.log_model(model, "model")
 
 print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward}, Epsilon: {epsilon:.2f}")
-
-
-
-# import pyautogui
-# import time
-# time.sleep(1)
-# for i in range(5):
-#     print("going up")
-#     time.sleep(3)
-#     pyautogui.keyDown('up')
-#     pyautogui.keyUp('up')

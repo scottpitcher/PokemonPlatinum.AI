@@ -5,7 +5,7 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 📁**Annotated_images**: Folder contained the actions, states, and labels for model pretraining before RL<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **action_map.py:** <br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **action_prep.py:** Script that displays an image, prompts for an action, then repeats until all images have been proccessed <br>
-&nbsp;&nbsp;&nbsp;&nbsp;📄 **annotations_errorcheck.py:** Script that runs through both the original and annotated filepatha to ensure metadata matches<br>
+&nbsp;&nbsp;&nbsp;&nbsp;📄 **annotations_errorcheck.py:** Script that runs through both the original and annotated filepath to ensure metadata matches<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **file_prep.py:** Script to prep the files for usage in the models (renaming to a standardised naming system)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📁 **Actions:** Folder that contains the actions (.json) for model pretraining <br>
 &nbsp;&nbsp;&nbsp;&nbsp;📁 **Images:** Folder that contains the images (.png) for model pretraining<br>
@@ -13,6 +13,7 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 📁 **models**: Folder that contains the model architecture, and the .pth files for each phase's trained model <br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **PokemonModelLSTM.py:** Modular script that contains the model architecture<br>
 📁 **RLHF_Scripts:** Folder that contains scripts and modular code for RLHF Model<br>
+&nbsp;&nbsp;&nbsp;&nbsp;📁 **human_review_logs**: Folder to hold the final state of each ep of training for human review
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **rlhf_phase1.py:** Script for training initial model for Phase 1 goal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **rlhf_phase2.py:** Script for training Phase 1 model for Phase 2 goal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **rlhf_phase3.py:** Script for training Phase 2 model for Phase 3, final goal<br>
