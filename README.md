@@ -13,7 +13,7 @@ Developing a Reinforcement Learning model to learn to play Pokemon Platinum, int
 📁 **models**: Folder that contains the model architecture, and the .pth files for each phase's trained model <br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **PokemonModelLSTM.py:** Modular script that contains the model architecture<br>
 📁 **RLHF_Scripts:** Folder that contains scripts and modular code for RLHF Model<br>
-&nbsp;&nbsp;&nbsp;&nbsp;📁 **human_review_logs**: Folder to hold the final state of each ep of training for human review
+&nbsp;&nbsp;&nbsp;&nbsp;📁 **human_review_logs**: Folder to hold the final state of each ep of training for human review<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **rlhf_phase1.py:** Script for training initial model for Phase 1 goal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **rlhf_phase2.py:** Script for training Phase 1 model for Phase 2 goal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;📄 **rlhf_phase3.py:** Script for training Phase 2 model for Phase 3, final goal<br>
