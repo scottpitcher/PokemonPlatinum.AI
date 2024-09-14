@@ -40,6 +40,9 @@ sys.path.append('/Users/scottpitcher/Desktop/python/Github/PokemonPlatinum.AI/')
 from RLHF_Scripts.modular_scripts.rlhf_utils import open_emulator, perform_action, capture_state, phase1_reward
 from RLHF_Scripts.modular_scripts.load_model import load_phase_1
 
+# Setting directory for human reviewing
+review_dir = "RLHF_Scripts/human_review_logs"
+
 model, optimizer = load_phase_1()
 criterion = nn.MSELoss()
 model.eval()
@@ -156,7 +159,6 @@ with mlflow.start_run():
 
             replay_buffer.append((state, action_index, reward, next_state, done))
             state = next_state
-
             if len(replay_buffer) > batch_size and j>=50:
                 print("Entering replay buffer") # Problem point: code stops executing emulator actions; solution: checking problem location
                 minibatch = random.sample(replay_buffer, batch_size)
@@ -186,11 +188,20 @@ with mlflow.start_run():
         # Decay epsilon at end of each episode
         if epsilon > min_epsilon:
             epsilon *= epsilon_decay
+        
+        # For each episode the final state and action pair will be recorded and used for human feedback
+        state_image_path = os.path.join(review_dir, f"states/final_state_episode_{episode}.png")
+        state.save(state_image_path)  # Save the final state image
 
+        log_path = os.path.join(review_dir, "final_review_log.txt")
+        with open(log_path, "a") as log_file:
+            log_file.write(f"Episode {episode}, Final Action: {ACTION_MAP_DIALOGUE[action]}, Done: {done}\n")
+        
+        # Loggin the episode metrics to MLflow
         mlflow.log_metric("episode_reward", episode_reward, step=episode)
         mlflow.log_metric("epsilon", epsilon, step=episode)
 
-    # Save the model to MLflow
+    # Save the model to MLflow once all episodes have been completed
     model_path = "models/route203_model.pth"
     torch.save(model.state_dict(), model_path)
     mlflow.pytorch.log_model(model, "model")
