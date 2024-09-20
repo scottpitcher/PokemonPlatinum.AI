@@ -9,6 +9,7 @@ from ultralytics import YOLO
 from PIL import Image
 import sys
 from torchvision import transforms
+import os
 
 device = 'cpu'
 
@@ -17,6 +18,58 @@ best = "runs/detect/firstRun/weights/best.pt"
 annotation_model = YOLO(best)
 
 # Variable definitions
+# Converts emulator input to model input
+ACTION_MAPPING = {
+    "x": 0,
+    "z": 1,
+    "s": 2,
+    "a": 3,
+    "up": 4,
+    "down": 5,
+    "left": 6,
+    "right": 7,
+    "none": 8
+}
+
+# Converts model output to emulator input
+REVERSED_ACTION_MAPPING = {
+    0: "x",
+    1: "z",
+    2: "s",
+    3: "a",
+    4: "up",
+    5: "down",
+    6: "left",
+    7: "right",
+    8: "none"
+}
+
+# Converts emulator input into action known to user
+ACTION_MAP_DIALOGUE = {
+    "x":'a',
+    "z":"b",
+    "s":"x",
+    "a":"y",
+    "up":"up",
+    "down":"down",
+    "left":"left",
+    "right":"right",
+    "none":"none"
+}
+
+# Converts back from emulator input for human feedback
+REVERSED_ACTION_MAP_DIALOGUE = {
+    'a': "x",
+    'b': "z",
+    'x': "s",
+    'y': "a",
+    'up': "up",
+    'down': "down",
+    'left': "left",
+    'right': "right",
+    'none': "none"
+}
+
 
 ## Filepaths for loading in the emulator and ROM/state
 desmume_executable = '/Applications/DeSmuME.app/Contents/MacOS/DeSmuME'
@@ -54,6 +107,24 @@ def detection_feedback():
             return True
         elif user_input =='no':
             return False
+        
+def get_human_feedback(action):
+    """Ask for human feedback after each action and get the better action if applicable."""
+    feedback = ''
+    while feedback not in ['good', 'bad', 'terrible']:
+        feedback = input(f"Was action: {action} good, bad, or terrible? (good/bad/terrible): ")
+
+    if feedback == 'good':
+        return 0, None  # No penalty, no better action needed
+    else:
+        # Ask for the better action if the move was bad
+        better_action = ''
+        while better_action not in ACTION_MAP_DIALOGUE.values():
+            better_action = input("What would have been the better action?(a/b/x/y/up/down/left/right): ")
+            better_action = REVERSED_ACTION_MAP_DIALOGUE[better_action]
+        
+        return -20 if feedback == 'bad' else -50, better_action  # Return penalty and better action
+
 
 def perform_action(action):
     """Function to utilise pyautgui to perform an action.
@@ -82,7 +153,7 @@ def phase1_reward(screenshot, annotation_model=annotation_model):
                 class_name = annotation_model.names[class_id]  # Map the class ID to the class name
                 print(f"{class_name} has confidence {confidence}")
                 # For Phase 1, reward is only detecting Route 203
-                if class_name == "route203" and confidence > 0.8:
+                if class_name == "route203" and confidence > 0.40:
                     print("Route 203 Reached!")
                     reward, done = 100, True
                     break
@@ -162,3 +233,4 @@ def phase3_reward(screenshot, annotation_model=annotation_model):
         else:
             break
     return reward, done
+
