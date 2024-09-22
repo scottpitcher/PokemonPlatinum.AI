@@ -137,17 +137,30 @@ with mlflow.start_run():
             # Step action counter
             j += 1
 
-            # ACTION
-            ## Exploration vs Exploitation
-            if np.random.rand() <= epsilon:
-                print("Using exploration") # Chooses from the action map keys
-                action = np.random.choice(list(ACTION_MAP_DIALOGUE.keys())) 
-            else:
-                print("Using exploitation")
-                q_values = model(state.unsqueeze(0))
-                action = torch.argmax(q_values).item()
-                action = REVERSED_ACTION_MAPPING[action]
-            
+        # ACTION
+        ## While loop to handle model processing errors
+        while True:  
+            try:
+                ## Exploration vs Exploitation
+                if np.random.rand() <= epsilon:
+                    print("Using exploration")  # Exploration: choose a random action
+                    action = np.random.choice(list(ACTION_MAP_DIALOGUE.keys())) 
+                else:
+                    print("Using exploitation")  # Exploitation: use the model to predict the best action
+                    q_values = model(state.unsqueeze(0))  # Get Q-values for the current state
+                    action = torch.argmax(q_values).item()  # Choose the action with the highest Q-value
+                    action = REVERSED_ACTION_MAPPING[action]  # Map back to emulator action
+
+                # If no error occurred, break the loop and move on to the next step
+                break
+
+            except ValueError as e:
+                print(f"ValueError during action selection: {e}. Retrying...")
+                # Continue the loop to try again (either exploration or exploitation)
+            except Exception as e:
+                print(f"Unexpected error during action selection: {e}. Retrying...")
+                # Catch any other exceptions and retry
+                    
             ## Map the key onto what the user understands in actual console gameplay
             print(f"Action: {ACTION_MAP_DIALOGUE[action]}")
 
