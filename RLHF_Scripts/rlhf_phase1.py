@@ -54,16 +54,19 @@ print("Gameplay model state successfully loaded!")
 print('Opening emulator...')
 open_emulator()
 print('Emulator opened!')
+time.sleep(2)               # Pause to allow emulator to open
 
 # Training loop:
-# 1. Loop through episodes
-# 2. Captures current state/annotatesfri
-# 3. Determines action (epsilon greedy policy)
-# 4. Performs action
-# 5. Captures next state, checks if done
-# 6. Appends replay buffer
-# 7. Sample from replay buffer for stabilization
-# 8. Epsilon Decay
+## 1.  Loop through episodes (starting fresh or from a checkpoint)
+## 2.  Capture current state and preprocess
+## 3.  Determine action (exploration or exploitation)
+## 4.  Perform action via emulator input
+## 5.  Capture next state and check if the episode is done
+## 6.  Get human feedback; immediate training if penalties
+## 7.  Append both replay buffers (short-term and long-term)
+## 8.  Sample minibatch from replay buffers for model stabilization
+## 9.  Epsilon Decay
+## 10. Save model, buffers, and logs periodically or upon pause
 
 
 # Initialize episode, buffers, and epsilon
@@ -106,7 +109,6 @@ else:
 
 # Start MLflow experiment
 mlflow.set_experiment("Pokemon_Platinum_AI_Phase1")
-
 
 # TRAINING LOOP
 print("Beginning training...")
@@ -153,7 +155,6 @@ with mlflow.start_run():
 
                 # If no error occurred, break the loop and move on to the next step
                 break
-
             except ValueError as e:
                 print(f"ValueError during action selection: {e}. Retrying...")
                 # Continue the loop to try again (either exploration or exploitation)
