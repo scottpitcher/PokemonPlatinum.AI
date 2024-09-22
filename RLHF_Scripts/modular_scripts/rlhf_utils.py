@@ -10,6 +10,8 @@ from PIL import Image
 import sys
 from torchvision import transforms
 import os
+from collections import deque
+
 
 device = 'cpu'
 
@@ -77,6 +79,42 @@ pokemon_rom = '/Users/scottpitcher/Downloads/PokemonRandomizer_1.10.3/Platinum_R
 # Functions
 
 ## Misc. Functions for Gameplay/Feedback
+def list_checkpoint_files(directory=".", prefix="phase1_checkpoint"):
+    """List all checkpoint files in the directory."""
+    files = [f for f in os.listdir(directory) if f.startswith(prefix) and f.endswith(".pth")]
+    files.sort(key=lambda f: int(f.split("checkpoint")[-1].split(".")[0]))  # Sort by episode number
+    return files
+
+def save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, filepath="training_checkpoint.pth"):
+    """Save the training state to a file."""
+    state = {
+        'episode': episode,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'replay_buffer': list(replay_buffer),  # Convert deque to list
+        'short_term_buffer': list(short_term_buffer),
+        'epsilon': epsilon
+    }
+    torch.save(state, filepath)
+    print(f"Training state saved at episode {episode}.")
+
+def load_training_state(filepath):
+    """Load the training state from a checkpoint file."""
+    if os.path.exists(filepath):
+        state = torch.load(filepath)
+        episode = state['episode']
+        model.load_state_dict(state['model_state_dict'])
+        optimizer.load_state_dict(state['optimizer_state_dict'])
+        replay_buffer = deque(state['replay_buffer'], maxlen=10000)
+        short_term_buffer = deque(state['short_term_buffer'], maxlen=20)
+        epsilon = state['epsilon']
+        print(f"Training state loaded from episode {episode}.")
+        return episode, replay_buffer, short_term_buffer, epsilon
+    else:
+        print(f"Checkpoint file {filepath} not found.")
+        return 0, deque(maxlen=10000), deque(maxlen=20), 0.75  # Return default if not found
+
+
 def open_emulator():
     """Function to open up the emulator and start the ROM file at the specified point"""
     subprocess.Popen([desmume_executable, pokemon_rom])
@@ -119,8 +157,8 @@ def get_human_feedback(action):
     else:
         # Ask for the better action if the move was bad
         better_action = ''
-        while better_action not in ACTION_MAP_DIALOGUE.values():
-            better_action = input("What would have been the better action?(a/b/x/y/up/down/left/right): ")
+        while better_action not in ["a","b","x","y","up","down","left","right","none"]:
+            better_action = input("What would have been the better action?(a/b/x/y/up/down/left/right/none): ")
             better_action = REVERSED_ACTION_MAP_DIALOGUE[better_action]
         
         return -20 if feedback == 'bad' else -50, better_action  # Return penalty and better action

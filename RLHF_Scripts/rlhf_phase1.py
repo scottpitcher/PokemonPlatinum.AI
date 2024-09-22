@@ -26,12 +26,9 @@ device = 'cpu'
 print(f"Device: {device}")
 
 # Hyperparameters
-epsilon = 0.75                       # Initial exploration rate (probability of choosing a random action); low due to human feedback mechanisms
 epsilon_decay = 0.995                # Decay rate for the exploration probability after each episode
 min_epsilon = 0.05                   # Minimum exploration rate to ensure some exploration continues
 gamma = 0.99                         # Discount factor for future rewards in Q-learning
-replay_buffer = deque(maxlen=10000)  # Large buffer to stabilize learning
-short_term_buffer = deque(maxlen=20) # Short-term buffer to prioritize recent experiences
 batch_size = 4                       # Number of experiences sampled from the replay buffer for training
 num_episodes = 500                   # Amount of times the model will go through the training loop
 print("Model hyperparameters set!")
@@ -39,7 +36,8 @@ print("Model hyperparameters set!")
 # Set system path to project
 sys.path.append('/Users/scottpitcher/Desktop/python/Github/PokemonPlatinum.AI/')
 from RLHF_Scripts.modular_scripts.rlhf_utils import (
-    open_emulator, capture_state, phase1_reward, ACTION_MAPPING, REVERSED_ACTION_MAPPING, ACTION_MAP_DIALOGUE,get_human_feedback
+    open_emulator, capture_state, phase1_reward, ACTION_MAPPING, REVERSED_ACTION_MAPPING, 
+    ACTION_MAP_DIALOGUE, get_human_feedback, list_checkpoint_files,load_training_state, save_training_state
 )
 from RLHF_Scripts.modular_scripts.load_model import load_phase_1
 
@@ -67,8 +65,44 @@ print('Emulator opened!')
 # 7. Sample from replay buffer for stabilization
 # 8. Epsilon Decay
 
-# Slight delay to ensure emulator is in correct window
-time.sleep(2)
+
+# Initialize episode, buffers, and epsilon
+start_episode = 0
+replay_buffer = deque(maxlen=10000)  # Large buffer to stabilize learning
+short_term_buffer = deque(maxlen=20) # Short-term buffer to prioritize recent experiences
+epsilon = 0.75                       # Initial exploration rate (probability of choosing a random action); low due to human feedback mechanisms
+
+# Prompt to start back training from a checkpoint
+resume = ''
+while resume not in ['yes','no']:
+    resume = input("Would you like to resume from a checkpoint? (yes/no): ").strip().lower()
+
+
+# If the user chooses to resume, list the available checkpoints
+if resume == "yes":
+    checkpoint_files = list_checkpoint_files()  # Get a list of checkpoint files
+    if checkpoint_files:
+        print("Available checkpoints:")
+        for i, file in enumerate(checkpoint_files, 1):
+            print(f"{i}. {file}")  # Print out each checkpoint with its corresponding index
+
+        # Keep asking the user for valid input until they provide a correct number
+        while True:
+            try:
+                choice = int(input("Enter the number of the checkpoint to resume from: ").strip())
+                if 1 <= choice <= len(checkpoint_files):
+                    selected_checkpoint = checkpoint_files[choice - 1]
+                    print(f"Resuming from checkpoint: {selected_checkpoint}")
+                    start_episode, replay_buffer, short_term_buffer, epsilon = load_training_state(selected_checkpoint)
+                    break  # Exit the loop after a valid input
+                else:
+                    print("Error: Episode number out of range. Please enter a valid number.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+    else:
+        print("No checkpoint files found. Starting from episode 0.")
+else:
+    print("Starting new training session from episode 0.")
 
 # Start MLflow experiment
 mlflow.set_experiment("Pokemon_Platinum_AI_Phase1")
@@ -114,11 +148,12 @@ with mlflow.start_run():
                 action = torch.argmax(q_values).item()
                 action = REVERSED_ACTION_MAPPING[action]
             
-            ## Map the key onto what the user would understand in actual console gameplay
+            ## Map the key onto what the user understands in actual console gameplay
             print(f"Action: {ACTION_MAP_DIALOGUE[action]}")
 
             ## Window Focus: Bring DeSmuME back into focus for next action
             os.system("osascript -e 'tell application \"DeSmuME\" to activate'")
+
             ## Execute Action: Use .keyDown/.keyUp as opposed to .press as emulator might not detect input
             pyautogui.keyDown(action)
             pyautogui.keyUp(action)
@@ -140,6 +175,7 @@ with mlflow.start_run():
                 if better_action:
                     # Map the better action to the model's index
                     better_action_index = ACTION_MAPPING[better_action]
+                    print("Training on immediate action")
                     try:
                         # Get the Q-values for the current state
                         q_values = model(state.unsqueeze(0))  # Get current Q-values for the state
@@ -174,8 +210,10 @@ with mlflow.start_run():
 
                 # Randomly choose between the smaller replay buffer (more recent memories) and larger (entire episode)
                 if random.random() < 0.5:
+                    print("Sampling from Short Term Buffer")
                     minibatch = random.sample(short_term_buffer, batch_size)
                 else:
+                    print("Sampling from Long Term Buffer")
                     minibatch = random.sample(replay_buffer, batch_size)
 
                 print("Minibatch Sampled")
@@ -200,12 +238,12 @@ with mlflow.start_run():
                 
                 # Reset action counter at end of replay buffer
                 j=0
-
-        # Decay epsilon at end of each episode
+        # EPISODE COMPLETED
+        ## Decay epsilon at end of each episode
         if epsilon > min_epsilon:
             epsilon *= epsilon_decay
         
-        # For each episode the final state and action pair will be recorded and used for human feedback
+        ## For each episode the final state and action pair will be recorded and used for human feedback
         state_image_path = os.path.join(review_dir, f"states/final_state_episode_{episode}.png")
         state.save(state_image_path)  # Save the final state image
 
@@ -213,9 +251,13 @@ with mlflow.start_run():
         with open(log_path, "a") as log_file:
             log_file.write(f"Episode {episode}, Final Action: {ACTION_MAP_DIALOGUE[action]}, Done: {done}\n")
         
-        # Loggin the episode metrics to MLflow
+        ## Loggin the episode metrics to MLflow
         mlflow.log_metric("episode_reward", episode_reward, step=episode)
         mlflow.log_metric("epsilon", epsilon, step=episode)
+
+        ## Save current training checkpoint
+        save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon)
+
 
     # Save the model to MLflow once all episodes have been completed
     model_path = "models/route203_model.pth"
