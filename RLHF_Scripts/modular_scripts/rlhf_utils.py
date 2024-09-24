@@ -85,8 +85,19 @@ def list_checkpoint_files(directory=".", prefix="phase1_checkpoint"):
     files.sort(key=lambda f: int(f.split("checkpoint")[-1].split(".")[0]))  # Sort by episode number
     return files
 
-def save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, filepath="training_checkpoint.pth"):
+## Saving the model state
+def save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, phase='phase1'):
     """Save the training state to a file."""
+    # Define the directory path
+    dir_path = f'models/{phase}'
+    
+    # Check if the directory exists, if not, create it
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print(f"Directory {dir_path} created.")
+    
+    filepath = f'models/{phase}/{phase}_episode{episode}.pth'
+
     state = {
         'episode': episode,
         'model_state_dict': model.state_dict(),
@@ -157,9 +168,13 @@ def get_human_feedback(action):
     else:
         # Ask for the better action if the move was bad
         better_action = ''
-        while better_action not in ["a","b","x","y","up","down","left","right","none"]:
+        while better_action not in REVERSED_ACTION_MAP_DIALOGUE.keys():
             better_action = input("What would have been the better action?(a/b/x/y/up/down/left/right/none): ")
-            better_action = REVERSED_ACTION_MAP_DIALOGUE[better_action]
+            if better_action not in REVERSED_ACTION_MAP_DIALOGUE.keys():
+                print("Invalid input")
+        
+        # Map better_action from user control to emulator input
+        better_action = REVERSED_ACTION_MAP_DIALOGUE[better_action]
         
         return -20 if feedback == 'bad' else -50, better_action  # Return penalty and better action
 

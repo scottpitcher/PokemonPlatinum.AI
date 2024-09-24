@@ -41,6 +41,11 @@ from RLHF_Scripts.modular_scripts.rlhf_utils import (
 )
 from RLHF_Scripts.modular_scripts.load_model import load_phase_1
 
+# Define the pruned action space (only directional actions)
+## Problem Point: Action space for this phase is too large for the complex environment
+## Solution: Reduce action space for this phase
+PRUNED_ACTIONS = ["up", "down", "left", "right"]
+
 # Setting directory for human reviewing
 review_dir = "RLHF_Scripts/human_review_logs"
 
@@ -122,45 +127,53 @@ with mlflow.start_run():
     mlflow.log_param("num_episodes", num_episodes)
 
     # Loop over num_episodes
-    for episode in range(num_episodes):
+    for episode in range(start_episode, num_episodes):
 
         # Capture initial state
         state = capture_state().convert('RGB').resize((640, 640))
         state = transforms.ToTensor()(state).unsqueeze(0).to(device)
         
         # Initialise episode variables
-        done = False
-        episode_reward = 0
-        j = 0
-        pyautogui.press('5') # Restart from Jubilife City
+        done = False            ## Reset Done status
+        episode_reward = 0      ## Reset episode reward
+        j = 0                   ## Reset action counter
+        episode_data = []       ## Reset episode data for Human Feedback
+        if episode > 0:         ## Restart from Jubilife City
+            pyautogui.press('5')
 
-        # Episode Start
+        # EPISODE START
         while not done:
             # Step action counter
             j += 1
 
-        # ACTION
-        ## While loop to handle model processing errors
-        while True:  
-            try:
-                ## Exploration vs Exploitation
-                if np.random.rand() <= epsilon:
-                    print("Using exploration")  # Exploration: choose a random action
-                    action = np.random.choice(list(ACTION_MAP_DIALOGUE.keys())) 
-                else:
-                    print("Using exploitation")  # Exploitation: use the model to predict the best action
-                    q_values = model(state.unsqueeze(0))  # Get Q-values for the current state
-                    action = torch.argmax(q_values).item()  # Choose the action with the highest Q-value
-                    action = REVERSED_ACTION_MAPPING[action]  # Map back to emulator action
+            # ACTION
+            ## While loop to handle model processing errors
+            while True:
+                try:
+                    # Exploration: Randomly choose from the pruned action space
+                    if np.random.rand() <= epsilon:
+                        print("Using exploration")
+                        action = np.random.choice(PRUNED_ACTIONS)  # Random directional action
 
-                # If no error occurred, break the loop and move on to the next step
-                break
-            except ValueError as e:
-                print(f"ValueError during action selection: {e}. Retrying...")
-                # Continue the loop to try again (either exploration or exploitation)
-            except Exception as e:
-                print(f"Unexpected error during action selection: {e}. Retrying...")
-                # Catch any other exceptions and retry
+                    # Exploitation: Use the model to predict the best action from pruned space
+                    else:
+                        print("Using exploitation")
+                        q_values = model(state.unsqueeze(0))
+                        action_index = torch.argmax(q_values).item()  # Best action based on model
+                        
+                        # Map back to the pruned action space (only directional actions)
+                        action = REVERSED_ACTION_MAPPING[action_index]
+
+                        # Ensure that only directional actions are selected
+                        if action not in PRUNED_ACTIONS:
+                            print(f"Action '{action}' not in pruned action space, retrying...")
+                            continue  # Retry action selection if a non-directional action is selected
+
+                    # If the selected action is valid, break out of the loop and proceed
+                    break
+
+                except Exception as e:
+                    print(f"Error during action selection: {e}. Retrying...")
                     
             ## Map the key onto what the user understands in actual console gameplay
             print(f"Action: {ACTION_MAP_DIALOGUE[action]}")
@@ -171,40 +184,13 @@ with mlflow.start_run():
             ## Execute Action: Use .keyDown/.keyUp as opposed to .press as emulator might not detect input
             pyautogui.keyDown(action)
             pyautogui.keyUp(action)
-
+            time.sleep(0.75) # Wait for state update
             # STATE
             next_state = capture_state().convert('RGB').resize((640, 640))
             next_state = transforms.ToTensor()(next_state).unsqueeze(0).to(device)
 
-            # HUMAN FEEDBACK/REWARD
+            # REWARD
             reward, done = phase1_reward(screenshot=next_state)
-            penalty, better_action = get_human_feedback(ACTION_MAP_DIALOGUE[action])
-            
-            ## Use immediate training from human feedback, if negative
-            if penalty < 0:
-                print(f"Human disapproved the action! Applying penalty: {penalty}")
-                reward += penalty  # Override/adjust reward if action was bad
-                
-                # If the action was bad, terrible, then the better_action will be immediately trained on ahead of the replay buffer
-                if better_action:
-                    # Map the better action to the model's index
-                    better_action_index = ACTION_MAPPING[better_action]
-                    print("Training on immediate action")
-                    try:
-                        # Get the Q-values for the current state
-                        q_values = model(state.unsqueeze(0))  # Get current Q-values for the state
-                        
-                        # Correct the Q-value for the better action
-                        target_f = q_values.clone()  # Clone current Q-values
-                        target_f[0][better_action_index] = reward  # Set the Q-value for the better action
-
-                        # Train the model on the corrected Q-values
-                        optimizer.zero_grad()
-                        loss = criterion(q_values, target_f)
-                        loss.backward()
-                        optimizer.step()
-                    except Exception as e:
-                        print(f"Error processing current item: {e}")
             
             ## Update episode reward
             episode_reward += reward
@@ -216,6 +202,12 @@ with mlflow.start_run():
             ## Append both replay buffers with current state
             replay_buffer.append((state, action_index, reward, next_state, done))
             short_term_buffer.append((state, action_index, reward, next_state, done))
+
+            ## Append the episode data (p=0.1) [10% of episode data to be reviewed by human]
+            if np.random.rand()<=0.1:
+                episode_data.append((state, action, reward, next_state, done))
+
+            ## Set next_state to state for next step
             state = next_state
 
             ## Enter replay_buffer when there are enough examples, then, every 5th step
@@ -233,7 +225,7 @@ with mlflow.start_run():
                 print("Minibatch Sampled")
                 for i, (state, action, reward, next_state, done) in enumerate(minibatch):
                     try:
-                        print(f"Minibatch item {i}/{batch_size} processing...")
+                        print(f"Minibatch item {i+1}/{batch_size} processing...")
                         state, next_state = state.unsqueeze(0), next_state.unsqueeze(0)
                         target = reward
                         if not done:
@@ -259,7 +251,9 @@ with mlflow.start_run():
         
         ## For each episode the final state and action pair will be recorded and used for human feedback
         state_image_path = os.path.join(review_dir, f"states/final_state_episode_{episode}.png")
-        state.save(state_image_path)  # Save the final state image
+        ## Convert the tensor back to a PIL image and save
+        state_image = transforms.ToPILImage()(state.squeeze(0))  # Remove batch dimension and convert to PIL
+        state_image.save(state_image_path)  # Save the final state image
 
         log_path = os.path.join(review_dir, "final_review_log.txt")
         with open(log_path, "a") as log_file:
@@ -270,11 +264,52 @@ with mlflow.start_run():
         mlflow.log_metric("epsilon", epsilon, step=episode)
 
         ## Save current training checkpoint
-        save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon)
+        save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, phase='phase1')
+
+        # HUMAN FEEDBACK
+        ## Use immediate training from human feedback, if negative
+        print(f"Reviewing sampled actions for human feedback (Episode {episode})")
+        for i, (state, action, reward, next_state, done) in enumerate(episode_data):
+            # Display the current state for feedback
+            img = np.array(capture_state())
+            plt.imshow(img)
+            plt.show()
+
+            # Get human feedback
+            penalty, better_action = get_human_feedback(ACTION_MAP_DIALOGUE[action])
+
+            if penalty < 0:
+                print(f"Human disapproved the action! Applying penalty: {penalty}")
+                reward += penalty  # Override/adjust reward if action was bad
+                
+                # If the action was bad, terrible, then the better_action will be immediately trained on ahead of the replay buffer
+                if better_action:
+                    # Map the better action to the model's index
+                    better_action_index = ACTION_MAPPING[better_action]
+                    print("Training on immediate action")
+                    try:
+                        # Get the Q-values for the current state
+                        q_values = model(state.unsqueeze(0))       # Get current Q-values for the state
+                        
+                        # Correct the Q-value for the better action
+                        target_f = q_values.clone()                # Clone current Q-values
+                        target_f[0][better_action_index] = reward  # Set the Q-value for the better action
+
+                        # Train the model on the corrected Q-values
+                        optimizer.zero_grad()
+                        loss = criterion(q_values, target_f)
+                        loss.backward()
+                        optimizer.step()
+                    except Exception as e:
+                        print(f"Error processing current item: {e}")
+        save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, phase='phase1/human_feedback')
+
+
+
 
 
     # Save the model to MLflow once all episodes have been completed
-    model_path = "models/route203_model.pth"
+    model_path = "models/phase1/route203_finalmodel.pth"
     torch.save(model.state_dict(), model_path)
     mlflow.pytorch.log_model(model, "model")
 
