@@ -11,13 +11,14 @@ import sys
 from torchvision import transforms
 import os
 from collections import deque
-
-
 device = 'cpu'
 
 # Load in annotation model
-best = "runs/detect/firstRun/weights/best.pt"
-annotation_model = YOLO(best)
+def annotation_model_fn():
+    best = "runs/detect/firstRun/weights/best.pt"
+    annotation_model = YOLO(best)
+    print("Annotation model loaded!")
+    return annotation_model
 
 # Variable definitions
 # Converts emulator input to model input
@@ -86,17 +87,15 @@ def list_checkpoint_files(directory=".", prefix="phase1_checkpoint"):
     return files
 
 ## Saving the model state
-def save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, phase='phase1'):
+def save_training_state(episode, model, optimizer, replay_buffer, short_term_buffer, epsilon, phase):
     """Save the training state to a file."""
     # Define the directory path
     dir_path = f'models/{phase}'
     
     # Check if the directory exists, if not, create it
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-        print(f"Directory {dir_path} created.")
+    os.makedirs(dir_path, exist_ok=True) 
     
-    filepath = f'models/{phase}/{phase}_episode{episode}.pth'
+    filepath = f'{dir_path}/episode{episode}.pth'
 
     state = {
         'episode': episode,
@@ -187,7 +186,7 @@ def perform_action(action):
 
 ## Reward Functions
         ### Phase 1 Reward(s)
-def phase1_reward(screenshot, annotation_model=annotation_model):
+def phase1_reward(screenshot, annotation_model):
     """Use annotation model to detect whether the Route 203 Location Pop-up is present."""
     transform = transforms.Compose([
         transforms.Resize((640, 640)),  # Resize to a shape divisible by 32
@@ -219,7 +218,7 @@ def phase1_reward(screenshot, annotation_model=annotation_model):
 
 
     ### Phase 2 Reward(s)
-def phase2_reward(screenshot, annotation_model=annotation_model):
+def phase2_reward(screenshot, annotation_model):
     """Use annotation model to detect current state for reward and whether or not the episode is finished."""
     transform = transforms.Compose([
         transforms.Resize((640, 640)),  # Resize to a shape divisible by 32
@@ -258,7 +257,7 @@ def phase2_reward(screenshot, annotation_model=annotation_model):
     return reward, done
 
     ### Phase 3 Reward(s)
-def phase3_reward(screenshot, annotation_model=annotation_model):
+def phase3_reward(screenshot, annotation_model):
     """Use annotation model to detect current state for reward and whether or not the episode is finished."""
     transform = transforms.Compose([
         transforms.Resize((640, 640)),  # Resize to a shape divisible by 32

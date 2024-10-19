@@ -3,11 +3,10 @@ import os
 import time
 
 # This script was used multiple times, the following output_dir reflects the most recent usage
-output_dir='annotated_images/'
+output_dir='annotated_images/phase-1/images'
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
 
 def capture_screenshots(output_dir=output_dir, interval=0.5):
     if not os.path.exists(output_dir):
@@ -28,4 +27,3 @@ def capture_screenshots(output_dir=output_dir, interval=0.5):
 
 # Example usage
 capture_screenshots(interval=.1)
-

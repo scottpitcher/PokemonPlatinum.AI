@@ -55,8 +55,8 @@ def annotate_images(images_dir, actions_dir):
             json.dump(action, f)
 
 # Define directories
-images_dir = 'annotated_images/images'
-actions_dir = 'annotated_images/actions'
+images_dir = 'annotated_images/phase-1/images'
+actions_dir = 'annotated_images/phase-1/actions'
 
 # Run the annotation
 annotate_images(images_dir, actions_dir)

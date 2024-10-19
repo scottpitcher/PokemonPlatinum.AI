@@ -10,6 +10,9 @@ annotated_images/actions/*
 annotated_images/labels/*
 annotated_images copy/*
 annotated_images (backup)/*
+annotated_images/phase-1/*
+annotated_images/phase-2/*
+annotated_images/phase-3/*
 
 # Ignore RoboFlow Data
 pokemon_platinum_ai-9/*

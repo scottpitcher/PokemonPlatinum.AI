@@ -1,0 +1,2 @@
+Episode 0, Final Action: down, Done: True
+Episode 0, Final Action: up, Done: True

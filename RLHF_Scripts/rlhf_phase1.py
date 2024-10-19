@@ -37,11 +37,11 @@ print("Model hyperparameters set!")
 sys.path.append('/Users/scottpitcher/Desktop/python/Github/PokemonPlatinum.AI/')
 from RLHF_Scripts.modular_scripts.rlhf_utils import (
     open_emulator, capture_state, phase1_reward, ACTION_MAPPING, REVERSED_ACTION_MAPPING, 
-    ACTION_MAP_DIALOGUE, get_human_feedback, list_checkpoint_files,load_training_state, save_training_state
+    ACTION_MAP_DIALOGUE, get_human_feedback, list_checkpoint_files,load_training_state, save_training_state,
+    annotation_model_fn
 )
 from RLHF_Scripts.modular_scripts.load_model import load_phase_1
 
-# Define the pruned action space (only directional actions)
 ## Problem Point: Action space for this phase is too large for the complex environment
 ## Solution: Reduce action space for this phase
 PRUNED_ACTIONS = ["up", "down", "left", "right"]
@@ -54,6 +54,9 @@ model, optimizer = load_phase_1()
 criterion = nn.MSELoss()
 model.eval()
 print("Gameplay model state successfully loaded!")
+
+# Load in annotation_model
+annotation_model = annotation_model_fn()
 
 # Open the emulator
 print('Opening emulator...')
@@ -128,19 +131,24 @@ with mlflow.start_run():
 
     # Loop over num_episodes
     for episode in range(start_episode, num_episodes):
+        print(f"Starting episode {episode}...")
 
         # Capture initial state
         state = capture_state().convert('RGB').resize((640, 640))
         state = transforms.ToTensor()(state).unsqueeze(0).to(device)
+        anotations = annotation_model(state)
         
         # Initialise episode variables
-        done = False            ## Reset Done status
+        done = False            ## Rese5t Done status
         episode_reward = 0      ## Reset episode reward
         j = 0                   ## Reset action counter
         episode_data = []       ## Reset episode data for Human Feedback
-        if episode > 0:         ## Restart from Jubilife City
-            pyautogui.press('5')
-
+        if episode > 0:         ## Restart env
+            print('Restarting env...')
+            os.system("osascript -e 'tell application \"DeSmuME\" to activate'")
+            pyautogui.keyDown('5')
+            pyautogui.keyUp('5')
+        
         # EPISODE START
         while not done:
             # Step action counter
@@ -149,32 +157,30 @@ with mlflow.start_run():
             # ACTION
             ## While loop to handle model processing errors
             while True:
-                try:
-                    # Exploration: Randomly choose from the pruned action space
+                    # Decide once whether to use exploration or exploitation
                     if np.random.rand() <= epsilon:
-                        print("Using exploration")
-                        action = np.random.choice(PRUNED_ACTIONS)  # Random directional action
-
-                    # Exploitation: Use the model to predict the best action from pruned space
+                        print("Using Exploration!")
+                        action = np.random.choice(PRUNED_ACTIONS)  #f Random directional action
+                        break  # Exploration always succeeds, so we break out of the loop
                     else:
-                        print("Using exploitation")
-                        q_values = model(state.unsqueeze(0))
-                        action_index = torch.argmax(q_values).item()  # Best action based on model
-                        
-                        # Map back to the pruned action space (only directional actions)
-                        action = REVERSED_ACTION_MAPPING[action_index]
+                        print("Using Exploitation!")
+                        try:
+                            q_values = model(state.unsqueeze(0))          # Assuming annotations are no longer used
+                            action_index = torch.argmax(q_values).item()  # Best action based on model
 
-                        # Ensure that only directional actions are selected
-                        if action not in PRUNED_ACTIONS:
-                            print(f"Action '{action}' not in pruned action space, retrying...")
-                            continue  # Retry action selection if a non-directional action is selected
+                            # Map back to the pruned action space (only directional actions)
+                            action = REVERSED_ACTION_MAPPING[action_index]
+                            print(f"Chosen action (exploitation): {action}")
 
-                    # If the selected action is valid, break out of the loop and proceed
-                    break
+                            # Ensure that only directional actions are selected
+                            if action in PRUNED_ACTIONS:
+                                break  # If a valid action is chosen, break out of the loop
+                            else:
+                                print(f"Action '{action}' not in pruned action space, retrying...")
 
-                except Exception as e:
-                    print(f"Error during action selection: {e}. Retrying...")
-                    
+                        except Exception as e:
+                            print(f"Error during action selection: {e}. Retrying...")
+                                
             ## Map the key onto what the user understands in actual console gameplay
             print(f"Action: {ACTION_MAP_DIALOGUE[action]}")
 
@@ -190,7 +196,7 @@ with mlflow.start_run():
             next_state = transforms.ToTensor()(next_state).unsqueeze(0).to(device)
 
             # REWARD
-            reward, done = phase1_reward(screenshot=next_state)
+            reward, done = phase1_reward(screenshot=next_state, annotation_model=annotation_model)
             
             ## Update episode reward
             episode_reward += reward
@@ -210,8 +216,8 @@ with mlflow.start_run():
             ## Set next_state to state for next step
             state = next_state
 
-            ## Enter replay_buffer when there are enough examples, then, every 5th step
-            if len(replay_buffer) > batch_size and j>=5:
+            ## Enter replay_buffer when there are enough examples, then, every 30th step
+            if len(replay_buffer) > batch_size and j>=30:
                 print("Entering replay buffer") 
 
                 # Randomly choose between the smaller replay buffer (more recent memories) and larger (entire episode)
@@ -245,20 +251,23 @@ with mlflow.start_run():
                 # Reset action counter at end of replay buffer
                 j=0
         # EPISODE COMPLETED
+        print(f"Episode {episode} completed, moving onto Human Feedback!")
         ## Decay epsilon at end of each episode
         if epsilon > min_epsilon:
             epsilon *= epsilon_decay
         
+        print("Writing final state and action")
         ## For each episode the final state and action pair will be recorded and used for human feedback
         state_image_path = os.path.join(review_dir, f"states/final_state_episode_{episode}.png")
         ## Convert the tensor back to a PIL image and save
         state_image = transforms.ToPILImage()(state.squeeze(0))  # Remove batch dimension and convert to PIL
-        state_image.save(state_image_path)  # Save the final state image
+        state_image.save(state_image_path)                       # Save the final state image
 
         log_path = os.path.join(review_dir, "final_review_log.txt")
         with open(log_path, "a") as log_file:
             log_file.write(f"Episode {episode}, Final Action: {ACTION_MAP_DIALOGUE[action]}, Done: {done}\n")
         
+        print("Logging to MLflow")
         ## Loggin the episode metrics to MLflow
         mlflow.log_metric("episode_reward", episode_reward, step=episode)
         mlflow.log_metric("epsilon", epsilon, step=episode)
@@ -270,9 +279,11 @@ with mlflow.start_run():
         ## Use immediate training from human feedback, if negative
         print(f"Reviewing sampled actions for human feedback (Episode {episode})")
         for i, (state, action, reward, next_state, done) in enumerate(episode_data):
+            # Remove unnecessary dimensions (batch and sequence dimension) and move the channel dimension to the last position
+            state_img = state.squeeze(0).permute(1, 2, 0).cpu().numpy()  # Shape: (640, 640, 3)
+            
             # Display the current state for feedback
-            img = np.array(capture_state())
-            plt.imshow(img)
+            plt.imshow(state_img)
             plt.show()
 
             # Get human feedback
@@ -286,7 +297,7 @@ with mlflow.start_run():
                 if better_action:
                     # Map the better action to the model's index
                     better_action_index = ACTION_MAPPING[better_action]
-                    print("Training on immediate action")
+                    print("Training on immediate action...")
                     try:
                         # Get the Q-values for the current state
                         q_values = model(state.unsqueeze(0))       # Get current Q-values for the state
