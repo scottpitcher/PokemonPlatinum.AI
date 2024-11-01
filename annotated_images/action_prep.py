@@ -3,6 +3,10 @@ import json
 from PIL import Image
 from natsort import natsorted
 
+# Define directories
+images_dir = 'annotated_images/phase-1/images'
+actions_dir = 'annotated_images/phase-1/actions'
+
 def get_action_from_user():
     """Function to receive an action from the user based on 9 choices"""
     action = ''
@@ -53,10 +57,6 @@ def annotate_images(images_dir, actions_dir):
 
         with open(action_file_path, 'w') as f:
             json.dump(action, f)
-
-# Define directories
-images_dir = 'annotated_images/phase-1/images'
-actions_dir = 'annotated_images/phase-1/actions'
 
 # Run the annotation
 annotate_images(images_dir, actions_dir)
