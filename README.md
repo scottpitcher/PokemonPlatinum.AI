@@ -1,6 +1,8 @@
 # PokemonPlatinum.AI 👾
 Developing a Reinforcement Learning model to learn to play Pokemon Platinum, integrating this into the code through a desktop emulator such as DeSmuME. Will then utilise RLHF (Reinforcement Learning with Human Feedback) for model training.
 
+**Full project report:** https://scottpitcher.github.io/#pokemonaipage
+
 # Project Overview ✅
 1. Develop YOLOv9 computer-vision based model to annotate gameplay states
 2. Build and hyperparameter tune the gameplay model (PyTorch DQN)
